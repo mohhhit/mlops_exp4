@@ -1,0 +1,12 @@
+{
+    "version": "v2",
+    "total_records": 456,
+    "train_records": 364,
+    "test_records": 92,
+    "missing_values": 0,
+    "duplicates": 0,
+    "invalid_aqi_values": 0,
+    "invalid_pollutant_values": 0,
+    "missing_required_columns": [],
+    "status": "PASS"
+}

@@ -1,0 +1,103 @@
+========================================================================
+EXPERIMENT NO 4: DATA INGESTION WITH PREPROCESSING PIPELINE
+Domain: Air Quality Index (AQI) Prediction Pipeline
+Data Source: Open-Meteo Air Quality API (Free, Public REST API)
+========================================================================
+
+1. PROBLEM STATEMENT OVERVIEW
+-----------------------------
+Predict Air Quality Index (US AQI) and AQI Category (Good, Moderate, 
+Unhealthy) based on real-time and historical atmospheric pollutants:
+- PM2.5 (Fine Particulate Matter)
+- PM10 (Coarse Particulate Matter)
+- Carbon Monoxide (CO)
+- Nitrogen Dioxide (NO2)
+- Sulphur Dioxide (SO2)
+- Ozone (O3)
+
+2. PIPELINE ARCHITECTURE & COMPONENTS
+--------------------------------------
+1. test_api.py:
+   - Tests connectivity to the Open-Meteo Air Quality API.
+   - Validates response code and payload structure.
+
+2. ingestion.py:
+   - Ingests raw hourly pollutant observations via REST API.
+   - Supports versioning (v1: Mumbai 7-day, v2: Delhi 14-day).
+   - Generates raw artifact: artifacts/<version>/raw_data.json
+
+3. preprocessing.py:
+   - Flattens nested JSON into structured tabular data.
+   - Parses timestamp into datetime objects.
+   - Removes duplicate records.
+   - Handles missing sensor values with forward/backward fill and median imputation.
+   - Enforces physical validity (clips negative pollutant readings to 0).
+   - Generates cleaned artifact: artifacts/<version>/cleaned_data.csv
+
+4. transformation.py:
+   - Performs feature engineering:
+     * Temporal features: hour, day_of_week, is_weekend.
+     * Cyclical hour encoding: hour_sin, hour_cos.
+     * Domain ratio: pm_ratio (PM2.5 / PM10).
+     * Categorical target encoding: aqi_category & aqi_category_code.
+   - Prepares dataset for Machine Learning:
+     * Performs 80/20 train/test time-series split.
+   - Generates ML artifacts:
+     * artifacts/<version>/processed_data.csv
+     * artifacts/<version>/train_data.csv
+     * artifacts/<version>/test_data.csv
+
+5. validation.py:
+   - Performs automated data quality checks:
+     * Total record count.
+     * Null value checks (target: 0 missing values).
+     * Duplicate checks (target: 0 duplicates).
+     * Value range validation (non-negative pollutants and AQI).
+     * Schema completeness and train/test set verification.
+   - Generates quality report artifact: artifacts/<version>/validation_report.json
+
+6. pipeline.py:
+   - Master orchestrator to run all stages sequentially for any version.
+
+3. HOW TO RUN THE PIPELINE
+--------------------------
+Step 1: Test API connection
+   python test_api.py
+
+Step 2: Run End-to-End Pipeline for Version 1 (Mumbai - 7 Days)
+   python pipeline.py --version v1
+
+Step 3: Run End-to-End Pipeline for Version 2 (Delhi - 14 Days)
+   python pipeline.py --version v2
+
+Step 4 (Alternative): Run individual stages manually
+   python ingestion.py --version v1
+   python preprocessing.py --version v1
+   python transformation.py --version v1
+   python validation.py --version v1
+
+4. ARTIFACTS DIRECTORY STRUCTURE
+--------------------------------
+artifacts/
+├── v1/
+│   ├── raw_data.json
+│   ├── cleaned_data.csv
+│   ├── processed_data.csv
+│   ├── train_data.csv
+│   ├── test_data.csv
+│   └── validation_report.json
+├── v2/
+│   ├── raw_data.json
+│   ├── cleaned_data.csv
+│   ├── processed_data.csv
+│   ├── train_data.csv
+│   ├── test_data.csv
+│   └── validation_report.json
+├── raw_data.json
+├── cleaned_data.csv
+├── processed_data.csv
+├── train_data.csv
+├── test_data.csv
+└── validation_report.json
+========================================================================
+
